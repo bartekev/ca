@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1118">
+<title>Crypto Return Lab — scenario calculator</title>
+<style>
+:root{
+  --bg:#0b1118;--panel:#111a24;--panel2:#151f2b;--line:#263545;
+  --text:#edf3f7;--muted:#8fa1b2;--teal:#5de0c1;--blue:#91b9ff;
+  --red:#ff969b;--green:#94f0d8;--amber:#f4c76b;--shadow:0 18px 44px rgba(0,0,0,.22);
+  font-synthesis:none
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 74% -8%,#183139 0,transparent 29%),var(--bg);color:var(--text);font:15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.wrap{width:calc(100% - 48px);width:min(1480px,100% - 48px);margin:auto;padding:28px 0 38px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:24px}
+.top-actions{display:flex;align-items:center;gap:9px}
+.secondary{background:#151f2b;border:1px solid var(--line);color:#cfdae4;border-radius:9px;padding:8px 10px;font-size:14px}
+.secondary:hover{border-color:#54717f;color:#fff}
+.brand{display:flex;align-items:center;gap:13px}
+.mark{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#77f1d1,#27a88d);color:#08241f;font-weight:900;font-size:21px}
+.brandname{font-size:17px;font-weight:750;letter-spacing:.02em}
+.brandmeta{font-size:14px;color:var(--muted);margin-top:2px}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.1;letter-spacing:-.04em;margin:8px 0}
+.lede{color:var(--muted);max-width:780px;margin:0;font-size:14px}
+main{display:grid;grid-template-columns:minmax(340px,430px) minmax(0,1fr);gap:18px;align-items:stretch;grid-auto-rows:1fr}
+.panel{background:linear-gradient(180deg,#121b26,#101821);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.input-panel{height:100%;min-height:100%;display:flex;flex-direction:column}
+.panel-body{padding:16px 20px 18px}
+.input-panel .panel-body{display:flex;flex:1;flex-direction:column}
+.group-title{display:flex;align-items:center;gap:8px;color:#cbd6df;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:2px 0 10px}
+.group-title:after{content:"";height:1px;background:#253342;flex:1}
+.group+.group{margin-top:17px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{min-width:0}
+.field.full{grid-column:1/-1}
+label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:650;color:#d5dfe7;margin-bottom:5px}
+.control{position:relative}
+input,select{width:100%;color:#eef4f8;background:#0b131c;border:1px solid #304152;border-radius:9px;padding:9px 10px;outline:none;min-height:44px;font-size:16px}
+input:focus,select:focus{border-color:#55cdb4;box-shadow:0 0 0 3px #50cfaf1d}
+input[type=number]{font-variant-numeric:tabular-nums}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=text]{font-variant-numeric:tabular-nums}
+.with-unit input{padding-right:43px}
+.unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#a4b2be;font-size:13px;pointer-events:none}
+.step-control input{padding-right:72px}
+.step-control.with-unit input{padding-right:96px}
+.step-control .unit{right:68px}
+.stepper{position:absolute;right:2px;top:0;bottom:0;display:flex;gap:2px;align-items:stretch}
+.stepper-button{width:31px;min-height:44px;border:1px solid #304152;border-radius:7px;background:#16222d;color:#d6e3ec;font-size:18px;font-weight:700;line-height:1;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.stepper-button:active{background:#264239;border-color:#55cdb4}
+.exposure-line{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:11px;padding:9px 11px;border-radius:9px;background:#0d151e;border:1px solid #263646;font-size:14px;color:var(--muted)}
+.exposure-line strong{color:var(--teal);font-variant-numeric:tabular-nums;text-align:right}
+.rr-box{display:flex;justify-content:space-between;align-items:center;margin:0;padding:9px 11px;border-radius:9px;background:#102521;border:1px solid #254a44;color:#a9c9c2;font-size:13px}
+.rr-box strong{color:var(--green);font-size:13px;font-variant-numeric:tabular-nums}
+.execution-grid{display:grid;gap:7px}
+.execution-row{display:grid;grid-template-columns:62px minmax(0,1fr) 88px;gap:8px;align-items:center}
+.execution-row .row-label{font-size:14px;font-weight:700;color:#cbd6df}
+.execution-row select{font-size:16px;padding:8px 9px;min-height:44px}
+.fee-readout{background:#0d151e;border:1px solid #263646;border-radius:8px;padding:6px 7px;text-align:center;font-size:14px;font-weight:750;color:var(--teal);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rate-edit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.rate-edit label{font-size:13px;color:#b1c0cc;margin-bottom:5px}
+.rate-edit .unit{right:9px}
+details{margin-top:9px}
+summary{cursor:pointer;color:#b1c0cc;font-size:14px;min-height:44px;display:flex;align-items:center}
+.fixed-tax{display:flex;align-items:center;justify-content:space-between;padding:10px 11px;border:1px solid #304152;border-radius:9px;background:#0b131c;color:#d5dfe7;font-weight:650}
+.fixed-tax strong{color:#fff;font-variant-numeric:tabular-nums}
+.exchange-warning{margin:8px 0 0;padding:10px;border:1px solid #69512c;border-radius:9px;background:#211d14;color:#f1d28f;font-size:14px;line-height:1.4}
+.chart-wrap{position:relative}
+.chart-tooltip{position:absolute;z-index:2;left:50%;bottom:9px;transform:translateX(-50%);max-width:calc(100% - 28px);padding:8px 11px;border:1px solid #527469;border-radius:9px;background:#101a21;color:#edf3f7;font-size:14px;font-weight:700;text-align:center;box-shadow:0 5px 18px #0008;pointer-events:none}
+.noscript-message{margin:12px auto;padding:12px 16px;max-width:900px;border:1px solid #69512c;border-radius:10px;background:#211d14;color:#f1d28f;font-size:14px}
+.right-col{display:flex;flex-direction:column;gap:15px;min-width:0;height:100%;min-height:0}
+.result-panel{position:relative}
+.result-hero{padding:21px 24px 19px;background:linear-gradient(110deg,#1a2430,#151f2b 68%,#172332);border-bottom:1px solid #33404d;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;transition:background .2s,border-color .2s}
+.result-hero[data-state="positive"]{background:linear-gradient(110deg,#122a2a,#142923 62%,#172c2d);border-color:#29413f}
+.result-hero[data-state="negative"]{background:linear-gradient(110deg,#321d22,#2b1a20 62%,#251a24);border-color:#63343b}
+.result-title{color:#a6c7bf;font-size:14px;font-weight:700;letter-spacing:.04em}
+.result-amount{font-size:clamp(35px,5vw,53px);font-weight:800;letter-spacing:-.055em;line-height:1.12;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.result-sub{color:#a5b3bf;font-size:14px}
+.return-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;border-radius:999px;padding:6px 10px;background:#273442;color:#d0dbe4;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.return-badge.positive{background:#1b3b37;color:#91f0da}
+.return-badge.negative{background:#40252b;color:#ffb2b5}
+.metrics{padding:14px 16px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;border-bottom:1px solid #253342}
+.metric{background:#0d151e;border:1px solid #263646;border-radius:11px;padding:11px 12px;min-width:0}
+.metric-label{font-size:14px;color:#b0bec9;font-weight:700}
+.metric-value{font-size:clamp(18px,2.1vw,24px);font-weight:800;letter-spacing:-.03em;margin:5px 0 2px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.positive{color:var(--green)!important}.negative{color:var(--red)!important}.neutral{color:#d8e1e8!important}
+.detail-pad{padding:12px 19px 15px}
+.detail-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:7px}
+.detail-head h3{font-size:14px;margin:0}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:540px}
+th{text-align:left;color:#8295a4;font-weight:650;padding:6px 7px;border-bottom:1px solid #263646}
+td{padding:8px 7px;border-bottom:1px solid #1e2a36;font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:0}
+.td-win{color:var(--green);font-weight:750}.td-loss{color:var(--red);font-weight:750}
+.chart-panel{padding-bottom:8px;display:flex;flex:1;flex-direction:column;min-height:0}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 19px 6px}
+.chart-head h2{font-size:14px;margin:0 0 3px}
+.chart-wrap{padding:2px 10px 0;display:flex;flex:1;align-items:center}
+#chart{width:100%;height:auto;display:block;overflow:visible}
+.grid-line{stroke:#273543;stroke-width:1}
+.axis-label{fill:#9babb8;font-size:12px}
+.chart-line{fill:none;stroke:#5de0c1;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart-area{fill:url(#areaFill)}
+.chart-point{fill:#5de0c1;stroke:#10251f;stroke-width:3}
+.chart-point.selected{fill:#a4f0df;stroke:#236c5e}
+.chart-point.sensitivity{fill:#9acbbd;stroke:#10251f;stroke-width:2}
+.chart-mark{cursor:pointer;outline:none;touch-action:manipulation}
+.chart-mark:focus .chart-point{stroke:#fff;stroke-width:2.5}
+.error-line{margin-top:9px;padding:8px 10px;border-radius:8px;color:#ffb4b7;background:#2b1a1f;border:1px solid #63343b;font-size:14px}
+@media(max-width:1050px){
+  main{grid-template-columns:minmax(310px,380px) minmax(0,1fr)}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .metric-value{font-size:22px}
+}
+@media(max-width:780px){
+  .wrap{width:calc(100% - 28px);width:min(100% - 28px,680px);padding-top:18px}
+  .topbar{align-items:flex-start;flex-wrap:wrap}
+  .top-actions{width:100%}
+  .secondary{min-height:44px;font-size:14px}
+  .hero{align-items:flex-start;flex-direction:column}
+  main{grid-template-columns:1fr;grid-auto-rows:auto;align-items:initial}
+  .input-panel{height:auto}
+  .input-panel .panel-body{display:block}
+  .right-col{height:auto;gap:12px}
+  .chart-panel{flex:0 0 auto}
+  .chart-wrap{display:block}
+}
+@media(max-width:520px){
+  .topbar{margin-bottom:18px}
+  .brandmeta{font-size:14px}
+  .panel-body{padding:14px 15px 16px}
+  .result-hero{padding:17px 16px;grid-template-columns:1fr}
+  .result-amount{font-size:38px}
+  .metrics{padding:10px;gap:7px}
+  .metric{padding:9px}
+  .metric-label{font-size:13px}
+  .metric-value{font-size:18px}
+  .detail-pad{padding:11px 13px}
+  .execution-row{grid-template-columns:55px minmax(0,1fr) 74px;gap:6px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">₿</div>
+      <div><div class="brandname">Crypto Return Lab</div><div class="brandmeta" id="marketSubtitle">Scenario calculator · perpetuals</div></div>
+    </div>
+    <div class="top-actions"><button class="secondary" id="resetBtn" type="button">Herstel standaardwaarden</button></div>
+  </div>
+
+  <header class="hero">
+    <div>
+      <h1>Wat kan je aanpak opleveren?</h1>
+      <p class="lede">Pas je portefeuille, margin, trade-uitkomsten en fees aan. De positie groeit of krimpt mee met je actuele saldo.</p>
+    </div>
+  </header>
+
+  <div id="scriptNotice" class="noscript-message" role="status">De calculator rekent niet door in deze voorvertoning. Open het HTML-bestand in Safari via een webadres.</div>
+
+  <main>
+    <section class="panel input-panel">
+      <div class="panel-body">
+        <div class="group">
+          <div class="group-title">01 · Portefeuille & margin</div>
+          <div class="fields">
+            <div class="field full">
+              <label for="portfolio">Startportefeuille</label>
+              <div class="control with-unit"><input id="portfolio" type="text" inputmode="decimal" autocomplete="off" value="10.000" aria-label="Startportefeuille in euro"><span class="unit">€</span></div>
+            </div>
+            <div class="field">
+              <label for="margin">Margin per trade</label>
+    <div class="control with-unit step-control"><input id="margin" type="number" inputmode="decimal" min="1" max="100" step="1" value="10"><span class="unit">%</span><div class="stepper"><button class="stepper-button" type="button" data-target="margin" data-delta="-1" aria-label="Margin verlagen">−</button><button class="stepper-button" type="button" data-target="margin" data-delta="1" aria-label="Margin verhogen">+</button></div></div>
+            </div>
+            <div class="field">
+              <label for="leverage">Leverage</label>
+              <div class="control with-unit step-control"><input id="leverage" type="number" inputmode="decimal" min="1" step="1" value="10"><span class="unit">×</span><div class="stepper"><button class="stepper-button" type="button" data-target="leverage" data-delta="-1" aria-label="Leverage verlagen">−</button><button class="stepper-button" type="button" data-target="leverage" data-delta="1" aria-label="Leverage verhogen">+</button></div></div>
+            </div>
+          </div>
+          <div class="exposure-line"><span id="positionLabel">Op startportefeuille</span><strong id="positionSummary">€1.000 margin · €10.000 positiewaarde</strong></div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">02 · Trade-instellingen</div>
+          <div class="fields">
+            <div class="field">
+              <label for="stop">Stop loss</label>
+              <div class="control with-unit step-control"><input id="stop" type="number" inputmode="decimal" min="0.1" max="99.9" step="0.1" value="0.5"><span class="unit">%</span><div class="stepper"><button class="stepper-button" type="button" data-target="stop" data-delta="-1" aria-label="Stop loss verlagen">−</button><button class="stepper-button" type="button" data-target="stop" data-delta="1" aria-label="Stop loss verhogen">+</button></div></div>
+            </div>
+            <div class="field">
+              <label for="target">Take profit</label>
+              <div class="control with-unit step-control"><input id="target" type="number" inputmode="decimal" min="0.1" max="99.9" step="0.1" value="1.0"><span class="unit">%</span><div class="stepper"><button class="stepper-button" type="button" data-target="target" data-delta="-1" aria-label="Take profit verlagen">−</button><button class="stepper-button" type="button" data-target="target" data-delta="1" aria-label="Take profit verhogen">+</button></div></div>
+            </div>
+            <div class="field full"><div class="rr-box"><span>R:R op koers</span><strong id="rrValue">2,0 : 1</strong></div></div>
+            <div class="field full">
+              <label for="direction">Handelsrichting</label>
+              <div class="control"><select id="direction"><option value="mixed" selected>50/50 long en short</option><option value="long">Alleen long</option><option value="short">Alleen short</option></select></div>
+            </div>
+            <div class="field">
+              <label for="trades">Trades per jaar</label>
+              <div class="control step-control"><input id="trades" type="number" inputmode="decimal" min="1" step="1" value="200"><div class="stepper"><button class="stepper-button" type="button" data-target="trades" data-delta="-1" aria-label="Trades per jaar verlagen">−</button><button class="stepper-button" type="button" data-target="trades" data-delta="1" aria-label="Trades per jaar verhogen">+</button></div></div>
+            </div>
+            <div class="field">
+              <label for="winrate">Winrate</label>
+              <div class="control with-unit step-control"><input id="winrate" type="number" inputmode="decimal" min="0" max="100" step="1" value="45"><span class="unit">%</span><div class="stepper"><button class="stepper-button" type="button" data-target="winrate" data-delta="-1" aria-label="Winrate verlagen">−</button><button class="stepper-button" type="button" data-target="winrate" data-delta="1" aria-label="Winrate verhogen">+</button></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group-title">03 · Uitvoering & fees</div>
+          <div class="field" style="margin-bottom:10px">
+            <label>Beurs / markt</label>
+            <div class="fixed-tax"><span>OKX · perpetuals</span><strong>Tier 1</strong></div>
+            <div class="exchange-warning">Funding is variabel en niet in de berekening opgenomen.</div>
+          </div>
+          <div class="execution-grid">
+            <div class="execution-row">
+              <span class="row-label">Entry</span>
+              <select id="entryType" aria-label="Uitvoering van de entry"><option value="maker" selected>Limit-entry · maker</option><option value="taker">Stop/market-entry · taker</option></select>
+              <div class="fee-readout"><span id="entryRate">0,02%</span></div>
+            </div>
+            <div class="execution-row">
+              <span class="row-label">Take profit</span>
+              <select id="winExitType" aria-label="Uitvoering van de take-profit"><option value="maker" selected>Limit-exit · maker</option><option value="taker">Market-exit · taker</option></select>
+              <div class="fee-readout"><span id="winExitRate">0,02%</span></div>
+            </div>
+            <div class="execution-row">
+              <span class="row-label">Stop loss</span>
+              <select id="lossExitType" aria-label="Uitvoering van de stop-loss"><option value="taker" selected>Stop-market · taker</option><option value="maker">Stop-limit · maker</option></select>
+              <div class="fee-readout"><span id="lossExitRate">0,05%</span></div>
+            </div>
+          </div>
+          <details>
+            <summary>Tarieven handmatig aanpassen</summary>
+            <div class="rate-edit">
+              <div class="field"><label for="makerFee">Maker fee</label><div class="control with-unit step-control"><input id="makerFee" type="number" inputmode="decimal" min="0" step="0.01" value="0.02"><span class="unit">%</span><div class="stepper"><button class="stepper-button" type="button" data-target="makerFee" data-delta="-1" aria-label="Maker fee verlagen">−</button><button class="stepper-button" type="button" data-target="makerFee" data-delta="1" aria-label="Maker fee verhogen">+</button></div></div></div>
+              <div class="field"><label for="takerFee">Taker fee</label><div class="control with-unit step-control"><input id="takerFee" type="number" inputmode="decimal" min="0" step="0.01" value="0.05"><span class="unit">%</span><div class="stepper"><button class="stepper-button" type="button" data-target="takerFee" data-delta="-1" aria-label="Taker fee verlagen">−</button><button class="stepper-button" type="button" data-target="takerFee" data-delta="1" aria-label="Taker fee verhogen">+</button></div></div></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="group">
+          <div class="group-title">04 · Belasting</div>
+          <div class="fixed-tax"><span>Vast tarief</span><strong>33%</strong></div>
+        </div>
+
+        <div id="errorLine" class="error-line" hidden></div>
+      </div>
+    </section>
+
+    <div class="right-col">
+      <section class="panel result-panel">
+        <div class="result-hero" id="resultHero" data-state="neutral" aria-live="polite">
+          <div>
+            <div class="result-title">Eindportefeuille na belasting</div>
+            <div class="result-amount" id="primaryBalance">—</div>
+            <div class="result-sub" id="primaryProfit">—</div>
+            <div class="return-badge" id="returnBadge">—</div>
+          </div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="metric-label">Bruto winst / verlies</div><div class="metric-value neutral" id="grossBeforeFees">—</div></div>
+          <div class="metric"><div class="metric-label" id="feeMetricLabel">Handelsfees</div><div class="metric-value neutral" id="totalFees">—</div></div>
+          <div class="metric"><div class="metric-label">Belasting · 33%</div><div class="metric-value neutral" id="taxAmount">—</div></div>
+          <div class="metric"><div class="metric-label">Netto winst / verlies</div><div class="metric-value neutral" id="netAfterTax">—</div></div>
+        </div>
+        <div class="detail-pad">
+          <div class="detail-head"><h3>Effect per trade bij startpositie</h3></div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>Uitkomst</th><th>Aantal</th><th>Koersbeweging</th><th>Kosten / trade</th><th>Netto vóór belasting</th></tr></thead>
+              <tbody>
+                <tr><td><span class="td-win">Winsttrade</span></td><td id="winCount">—</td><td id="targetMove">—</td><td id="winFeeAmount">—</td><td id="winNet">—</td></tr>
+                <tr><td><span class="td-loss">Verliestrade</span></td><td id="lossCount">—</td><td id="stopMove">—</td><td id="lossFeeAmount">—</td><td id="lossNet">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel chart-panel">
+        <div class="chart-head"><div><h2>Gevoeligheid voor winrate</h2></div></div>
+        <div class="chart-wrap"><svg id="chart" viewBox="0 0 720 250" role="img" aria-label="Geschatte eindportefeuille bij verschillende winrates"></svg><div id="chartTooltip" class="chart-tooltip" role="status" aria-live="polite" hidden></div></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+<script>
+(function(){
+  "use strict";
+  var inputIds=["margin","leverage","stop","target","trades","winrate","direction","entryType","winExitType","lossExitType","makerFee","takerFee"];
+  var defaults={portfolio:"10000",margin:10,leverage:10,stop:0.5,target:1,trades:200,winrate:45,direction:"mixed",entryType:"maker",winExitType:"maker",lossExitType:"taker",makerFee:0.02,takerFee:0.05};
+  var taxRate=0.33;
+  var eur=new Intl.NumberFormat("nl-BE",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+  var numberBE=new Intl.NumberFormat("nl-BE",{maximumFractionDigits:2});
+  var pctBE=new Intl.NumberFormat("nl-BE",{maximumFractionDigits:1});
+  var feePctBE=new Intl.NumberFormat("nl-BE",{minimumFractionDigits:2,maximumFractionDigits:2});
+  function el(id){return document.getElementById(id)}
+  function parsePortfolio(){
+    var s=String(el("portfolio").value||"").trim().replace(/[€\s\u00a0]/g,"").replace(/\./g,"").replace(",",".");
+    var v=Number(s);
+    return Number.isFinite(v)?v:0;
+  }
+  function num(id){var v=Number(el(id).value);return Number.isFinite(v)?v:0}
+  function signEUR(v){return (v>=0?"+":"−")+eur.format(Math.abs(v))}
+  function costEUR(v){return v>0?"−"+eur.format(v):eur.format(0)}
+  function pctText(v){return pctBE.format(v)+"%"}
+  function feeText(v){return feePctBE.format(v)+"%"}
+  function selectedFee(type,x){return type==="maker"?x.makerFee:x.takerFee}
+  function exitFactor(x,isWin,direction){
+    if(isWin)return direction==="long"?1+x.tp:1-x.tp;
+    return direction==="long"?1-x.sl:1+x.sl;
+  }
+  function outcomeStats(x,isWin,rates){
+    var feeFraction=0,netRate=0,count=0,wins=Math.round(x.n*x.wr);
+    for(var i=0;i<x.n;i++){
+      var tradeIsWin=Math.floor((i+1)*wins/x.n)>Math.floor(i*wins/x.n);
+      if(tradeIsWin!==isWin)continue;
+      var direction=x.direction==="mixed"?(i%2===0?"long":"short"):x.direction;
+      var factor=exitFactor(x,isWin,direction),exitRate=isWin?rates.winExit:rates.lossExit;
+      var move=isWin?x.tp:-x.sl;
+      var cost=rates.entry+factor*exitRate;
+      feeFraction+=cost;
+      netRate+=x.margin*x.lev*(move-cost);
+      count++;
+    }
+    if(!count){
+      var dirs=x.direction==="mixed"?["long","short"]:[x.direction];
+      dirs.forEach(function(direction){
+        var factor=exitFactor(x,isWin,direction),exitRate=isWin?rates.winExit:rates.lossExit;
+        var move=isWin?x.tp:-x.sl;
+        var cost=rates.entry+factor*exitRate;
+        feeFraction+=cost;netRate+=x.margin*x.lev*(move-cost);count++;
+      });
+    }
+    return {feeFraction:feeFraction/count,netRate:netRate/count};
+  }
+  function getInputs(){
+    return {
+      p:parsePortfolio(),margin:num("margin")/100,lev:num("leverage"),
+      sl:num("stop")/100,tp:num("target")/100,n:num("trades"),
+      wr:num("winrate")/100,tax:taxRate,direction:el("direction").value,
+      makerFee:num("makerFee")/100,takerFee:num("takerFee")/100,
+      entryType:el("entryType").value,winExitType:el("winExitType").value,lossExitType:el("lossExitType").value
+    };
+  }
+  function feeRates(x){
+    return {
+      entry:selectedFee(x.entryType,x),
+      winExit:selectedFee(x.winExitType,x),
+      lossExit:selectedFee(x.lossExitType,x)
+    };
+  }
+  function simulate(x,wr){
+    var wins=Math.round(x.n*wr),losses=x.n-wins,exposure=x.margin*x.lev;
+    var rates=feeRates(x);
+    if(x.direction==="short"||x.direction==="mixed"){
+      if(exitFactor(x,true,"short")<=0)return {invalid:true,wins:wins,losses:losses};
+    }
+    if(x.direction==="long"||x.direction==="mixed"){
+      if(exitFactor(x,false,"long")<=0)return {invalid:true,wins:wins,losses:losses};
+    }
+    var balance=x.p,gross=0,fees=0;
+    for(var i=0;i<x.n;i++){
+      var isWin=Math.floor((i+1)*wins/x.n)>Math.floor(i*wins/x.n);
+      var direction=x.direction==="mixed"?(i%2===0?"long":"short"):x.direction;
+      var notional=balance*exposure;
+      var move=isWin?x.tp:-x.sl;
+      var exitRate=isWin?rates.winExit:rates.lossExit;
+      var tradeGross=notional*move;
+      var tradeFees=notional*rates.entry+notional*exitFactor(x,isWin,direction)*exitRate;
+      gross+=tradeGross;
+      fees+=tradeFees;
+      balance+=tradeGross-tradeFees;
+    }
+    var beforeTax=balance,preTaxProfit=beforeTax-x.p,tax=Math.max(0,preTaxProfit)*x.tax,afterTax=beforeTax-tax;
+    return {
+      beforeTax:beforeTax,afterTax:afterTax,profit:afterTax-x.p,preTaxProfit:preTaxProfit,
+      tax:tax,fees:fees,gross:gross,wins:wins,losses:losses,exposure:exposure,
+    };
+  }
+  function stateFor(profit){
+    if(profit>0.005)return "positive";
+    if(profit< -0.005)return "negative";
+    return "neutral";
+  }
+  function setOutcomeClass(id,profit){
+    var node=el(id);node.classList.remove("positive","negative","neutral");
+    node.classList.add(stateFor(profit));
+  }
+  function clearResults(message){
+    el("resultHero").dataset.state="neutral";
+    el("primaryBalance").textContent="—";
+    el("primaryProfit").textContent=message;
+    el("primaryProfit").className="result-sub neutral";
+    el("returnBadge").textContent="Controleer invoer";
+    el("returnBadge").className="return-badge neutral";
+    ["grossBeforeFees","totalFees","taxAmount","netAfterTax"].forEach(function(id){el(id).textContent="—";el(id).className="metric-value neutral"});
+    ["winCount","lossCount","targetMove","stopMove","winFeeAmount","lossFeeAmount","winNet","lossNet"].forEach(function(id){el(id).textContent="—";el(id).className="neutral"});
+    el("chartTooltip").hidden=true;
+    el("chart").innerHTML="";
+  }
+  function validate(x){
+    var errors=[];
+    if(x.p<=0)errors.push("Vul een startportefeuille groter dan nul in.");
+    if(x.margin<=0||x.margin>1)errors.push("Margin moet groter zijn dan 0% en maximaal 100% van de portefeuille.");
+    if(x.lev<=0)errors.push("Leverage moet groter zijn dan nul.");
+    if(x.sl<=0||x.tp<=0)errors.push("Stop loss en take profit moeten groter zijn dan nul.");
+    if(x.n<1||Math.floor(x.n)!==x.n)errors.push("Trades per jaar moet een volledig getal vanaf 1 zijn.");
+    if(x.wr<0||x.wr>1)errors.push("Winrate moet tussen 0% en 100% liggen.");
+    if(x.sl>=1)errors.push("Stop loss moet kleiner zijn dan 100%.");
+    if((x.direction==="short"||x.direction==="mixed")&&x.tp>=1)errors.push("Take profit voor short moet kleiner zijn dan 100%.");
+    if(x.makerFee<0||x.takerFee<0)errors.push("Fees mogen niet negatief zijn.");
+    var rates=feeRates(x),exposure=x.margin*x.lev;
+    if(exposure<=0)errors.push("De positiewaarde moet groter zijn dan nul.");
+    if(x.lev>0){
+      var stopExitMax=x.direction==="long"?1-x.sl:1+x.sl;
+      if(x.lev*(x.sl+rates.entry+rates.lossExit*stopExitMax)>=1)errors.push("Stop loss en handelsfees kunnen de volledige margin opgebruiken. Verlaag leverage of stop loss.");
+    }
+    return errors;
+  }
+  function updateSelectedFeeLabels(x){
+    var r=feeRates(x);
+    el("entryRate").textContent=feeText(r.entry*100);
+    el("winExitRate").textContent=feeText(r.winExit*100);
+    el("lossExitRate").textContent=feeText(r.lossExit*100);
+    el("feeMetricLabel").textContent="Handelsfees";
+  }
+  function moneyOrDash(id,value){el(id).textContent=Number.isFinite(value)?eur.format(value):"—"}
+  function update(){
+    el("scriptNotice").hidden=true;
+    var x=getInputs(),errors=validate(x),exposure=x.margin*x.lev;
+    var marginEUR=x.p*x.margin,notionalEUR=marginEUR*x.lev;
+    el("positionSummary").textContent=eur.format(marginEUR)+" margin · "+eur.format(notionalEUR)+" positiewaarde";
+    el("positionLabel").textContent="Margin · positiewaarde bij huidige invoer";
+    el("rrValue").textContent=x.sl>0&&x.tp>0?(x.tp/x.sl).toLocaleString("nl-BE",{minimumFractionDigits:1,maximumFractionDigits:1})+" : 1":"—";
+    updateSelectedFeeLabels(x);
+    if(errors.length){
+      el("errorLine").textContent=errors[0];el("errorLine").hidden=false;
+      clearResults(errors[0]);
+      return;
+    }
+    el("errorLine").hidden=true;
+    var r=simulate(x,x.wr);
+    if(r.invalid){
+      el("errorLine").textContent="De gekozen stop loss en kosten kunnen de toegewezen margin volledig opgebruiken.";el("errorLine").hidden=false;
+      clearResults(el("errorLine").textContent);
+      return;
+    }
+    el("resultHero").dataset.state=stateFor(r.profit);
+    moneyOrDash("primaryBalance",r.afterTax);
+    el("primaryProfit").textContent=signEUR(r.profit)+" netto op startportefeuille van "+eur.format(x.p);
+    el("primaryProfit").className="result-sub "+stateFor(r.profit);
+    el("returnBadge").textContent=pctText((r.afterTax/x.p-1)*100);
+    el("returnBadge").className="return-badge "+stateFor(r.profit);
+    el("grossBeforeFees").textContent=signEUR(r.gross);setOutcomeClass("grossBeforeFees",r.gross);
+    el("totalFees").textContent=costEUR(r.fees);setOutcomeClass("totalFees",-r.fees);
+    el("taxAmount").textContent=costEUR(r.tax);setOutcomeClass("taxAmount",-r.tax);
+    el("netAfterTax").textContent=signEUR(r.profit);setOutcomeClass("netAfterTax",r.profit);
+    var startNotional=x.p*exposure,rates=feeRates(x);
+    var winStats=outcomeStats(x,true,rates),lossStats=outcomeStats(x,false,rates);
+    el("winCount").textContent=String(r.wins);
+    el("lossCount").textContent=String(r.losses);
+    el("targetMove").textContent="+"+pctText(x.tp*100);
+    el("stopMove").textContent="−"+pctText(x.sl*100);
+    el("targetMove").className="positive";el("stopMove").className="negative";
+    el("winFeeAmount").textContent=costEUR(startNotional*winStats.feeFraction);
+    el("lossFeeAmount").textContent=costEUR(startNotional*lossStats.feeFraction);
+    el("winFeeAmount").className="negative";el("lossFeeAmount").className="negative";
+    el("winNet").textContent=(winStats.netRate>=0?"+":"−")+pctText(Math.abs(winStats.netRate*100));
+    el("lossNet").textContent=(lossStats.netRate>=0?"+":"−")+pctText(Math.abs(lossStats.netRate*100));
+    el("winNet").className=winStats.netRate>=0?"positive":"negative";
+    el("lossNet").className=lossStats.netRate>=0?"positive":"negative";
+    renderChart(x);
+    save();
+  }
+  function formatPortfolio(){
+    var v=parsePortfolio();
+    if(v>0)el("portfolio").value=numberBE.format(v);
+  }
+  var storageKey="cryptoReturnLabOKX";
+  function save(){
+    try{
+      var v={portfolio:parsePortfolio()};
+      inputIds.forEach(function(id){v[id]=el(id).value});
+      localStorage.setItem(storageKey,JSON.stringify(v));
+    }catch(e){}
+  }
+  function restore(){
+    try{
+      var raw=localStorage.getItem(storageKey);
+      if(!raw){
+        var previous=localStorage.getItem("cryptoReturnLab");
+        if(previous){
+          var old=JSON.parse(previous);
+          Object.keys(defaults).forEach(function(id){
+            if(id!=="makerFee"&&id!=="takerFee"&&old[id]!==undefined)el(id).value=old[id];
+          });
+          if(old.exchange==="okx"){
+            if(old.makerFee!==undefined)el("makerFee").value=old.makerFee;
+            if(old.takerFee!==undefined)el("takerFee").value=old.takerFee;
+          }
+          if(old.portfolio!==undefined)el("portfolio").value=String(old.portfolio);
+          return;
+        }
+      }
+      if(!raw)return;
+      var v=JSON.parse(raw);
+      Object.keys(defaults).forEach(function(id){if(v[id]!==undefined)el(id).value=v[id]});
+      if(v.portfolio!==undefined)el("portfolio").value=String(v.portfolio);
+    }catch(e){}
+  }
+  function renderChart(x){
+    var svg=el("chart"),low=Math.max(0,x.wr-0.20),high=Math.min(1,x.wr+0.20);
+    if(high-low<0.4){if(low===0)high=Math.min(1,low+0.4);else low=Math.max(0,high-0.4)}
+    var points=[],steps=40;
+    for(var i=0;i<=steps;i++){var wr=low+(high-low)*i/steps;var v=simulate(x,wr);points.push({wr:wr,v:v.invalid?x.p:v.afterTax})}
+    var vals=points.map(function(p){return p.v}),mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
+    var pad=Math.max((mx-mn)*0.14,x.p*0.025);mn=Math.max(0,mn-pad);mx=mx+pad;if(mx<=mn)mx=mn+1;
+    var W=720,H=250,L=78,R=18,T=18,B=35,plotW=W-L-R,plotH=H-T-B;
+    function xx(w){return L+(w-low)/(high-low)*plotW}
+    function yy(v){return T+(mx-v)/(mx-mn)*plotH}
+    var out='<defs><linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#57d9bc" stop-opacity=".22"/><stop offset="100%" stop-color="#57d9bc" stop-opacity="0"/></linearGradient></defs>';
+    for(var j=0;j<4;j++){
+      var y=T+j*plotH/3,val=mx-j*(mx-mn)/3;
+      out+='<line class="grid-line" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text class="axis-label" x="'+(L-8)+'" y="'+(y+4)+'" text-anchor="end">'+eur.format(val)+'</text>';
+    }
+    var d=points.map(function(p,i){return (i?"L":"M")+xx(p.wr).toFixed(1)+","+yy(p.v).toFixed(1)}).join(" ");
+    var area=d+" L"+xx(high).toFixed(1)+","+(T+plotH)+" L"+xx(low).toFixed(1)+","+(T+plotH)+" Z";
+    out+='<path class="chart-area" d="'+area+'"/><path class="chart-line" d="'+d+'"/>';
+    var firstTick=Math.ceil(low*20-1e-8),lastTick=Math.floor(high*20+1e-8),selectedOnTick=false;
+    for(var t=firstTick;t<=lastTick;t++){
+      var tick=t/20,result=simulate(x,tick),value=result.invalid?x.p:result.afterTax;
+      var selectedTick=Math.abs(tick-x.wr)<1e-8;
+      if(selectedTick)selectedOnTick=true;
+      var label=pctText(tick*100),tip="Winrate "+label+" · Eindportefeuille "+eur.format(value);
+      out+='<g class="chart-mark" data-chart-label="'+escapeAttr(tip)+'" tabindex="0" role="button" aria-label="'+escapeAttr(tip)+'"><circle class="chart-point-hit" cx="'+xx(tick).toFixed(1)+'" cy="'+yy(value).toFixed(1)+'" r="44" fill="transparent" pointer-events="all"/><circle class="chart-point '+(selectedTick?"selected":"sensitivity")+'" cx="'+xx(tick).toFixed(1)+'" cy="'+yy(value).toFixed(1)+'" r="'+(selectedTick?6:3.4)+'" pointer-events="none"/><title>'+escapeAttr(tip)+'</title></g>';
+      if(t%2===0)out+='<text class="axis-label" x="'+xx(tick).toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle">'+label+'</text>';
+    }
+    if(!selectedOnTick){
+      var selected=simulate(x,x.wr),sx=xx(x.wr),sy=yy(selected.afterTax);
+      var selectedLabel="Winrate "+pctText(x.wr*100)+" · Eindportefeuille "+eur.format(selected.afterTax);
+      out+='<line x1="'+sx.toFixed(1)+'" y1="'+T+'" x2="'+sx.toFixed(1)+'" y2="'+(T+plotH)+'" stroke="#5de0c1" stroke-width="1" stroke-dasharray="4 5" opacity=".58"/><g class="chart-mark" data-chart-label="'+escapeAttr(selectedLabel)+'" tabindex="0" role="button" aria-label="'+escapeAttr(selectedLabel)+'"><circle class="chart-point-hit" cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="44" fill="transparent" pointer-events="all"/><circle class="chart-point selected" cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="6" pointer-events="none"/><title>'+escapeAttr(selectedLabel)+'</title></g>';
+    }
+    svg.innerHTML=out;
+  }
+  function escapeAttr(value){return String(value).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+  function chartMarkFromTarget(target){
+    while(target&&target!==el("chart")&&!(target.getAttribute&&target.getAttribute("data-chart-label")))target=target.parentNode;
+    return target&&target!==el("chart")?target:null;
+  }
+  function showChartTooltip(mark){
+    if(!mark)return;
+    var tip=el("chartTooltip");tip.textContent=mark.getAttribute("data-chart-label");tip.hidden=false;
+  }
+  function stepInput(button){
+    var input=el(button.getAttribute("data-target"));if(!input)return;
+    var step=Number(input.step)||1,current=Number(input.value);
+    if(!Number.isFinite(current))current=Number(input.min)||0;
+    var delta=Number(button.getAttribute("data-delta"))||0;
+    var digits=(String(step).split(".")[1]||"").length;
+    var factor=Math.pow(10,Math.min(digits,8));
+    var next=Math.round((current+step*delta)*factor)/factor;
+    if(input.min!==""&&Number.isFinite(Number(input.min)))next=Math.max(next,Number(input.min));
+    if(input.max!==""&&Number.isFinite(Number(input.max)))next=Math.min(next,Number(input.max));
+    input.value=String(next);
+    var inputEvent,changeEvent;
+    try{inputEvent=new Event("input",{bubbles:true});changeEvent=new Event("change",{bubbles:true})}
+    catch(e){inputEvent=document.createEvent("Event");inputEvent.initEvent("input",true,true);changeEvent=document.createEvent("Event");changeEvent.initEvent("change",true,true)}
+    input.dispatchEvent(inputEvent);input.dispatchEvent(changeEvent);
+  }
+  function reset(){
+    Object.keys(defaults).forEach(function(id){el(id).value=defaults[id]});
+    el("portfolio").value="10.000";
+    try{localStorage.removeItem(storageKey);localStorage.removeItem("cryptoReturnLab")}catch(e){}
+    update();
+  }
+  inputIds.forEach(function(id){el(id).addEventListener("input",update);el(id).addEventListener("change",update)});
+  Array.prototype.forEach.call(document.querySelectorAll(".stepper-button"),function(button){button.addEventListener("click",function(){stepInput(button)})});
+  el("chart").addEventListener("pointerover",function(event){if(event.pointerType!=="touch")showChartTooltip(chartMarkFromTarget(event.target))});
+  el("chart").addEventListener("pointerdown",function(event){showChartTooltip(chartMarkFromTarget(event.target))});
+  el("chart").addEventListener("click",function(event){var mark=chartMarkFromTarget(event.target);if(mark)showChartTooltip(mark);else el("chartTooltip").hidden=true});
+  el("chart").addEventListener("focusin",function(event){showChartTooltip(chartMarkFromTarget(event.target))});
+  el("chart").addEventListener("pointerout",function(event){if(event.pointerType!=="touch"&&!chartMarkFromTarget(event.relatedTarget))el("chartTooltip").hidden=true});
+  el("chart").addEventListener("focusout",function(event){if(!chartMarkFromTarget(event.relatedTarget))el("chartTooltip").hidden=true});
+  document.addEventListener("pointerdown",function(event){if(!el("chart").contains(event.target))el("chartTooltip").hidden=true});
+  document.addEventListener("click",function(event){if(!el("chart").contains(event.target))el("chartTooltip").hidden=true});
+  document.addEventListener("keydown",function(event){if(event.key==="Escape")el("chartTooltip").hidden=true});
+  el("portfolio").addEventListener("input",update);
+  el("portfolio").addEventListener("focus",function(){el("portfolio").value=String(parsePortfolio()||"").replace(".",",")});
+  el("portfolio").addEventListener("blur",function(){formatPortfolio();update()});
+  el("resetBtn")&&el("resetBtn").addEventListener("click",reset);
+  try{restore()}catch(e){}
+  formatPortfolio();
+  try{update()}catch(e){el("errorLine").textContent="De berekening kon niet starten: "+(e&&e.message?e.message:"onbekende fout");el("errorLine").hidden=false}
+})();
+</script>
+</body>
+</html>
